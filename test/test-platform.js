@@ -175,7 +175,11 @@ describe('ShellyPlatform', function() {
       'should return null when an unknown interface is configured',
       function() {
         const networkInterfaces = sinon.stub(os, 'networkInterfaces')
-          .returns({ en0: [{ address: '192.168.1.2' }] })
+          .returns({
+            en0: [
+              { address: '192.168.1.2', family: 'IPv4', internal: false },
+            ],
+          })
 
         platform.config.networkInterface = 'en1'
         should(platform.getNetworkInterface()).be.null()
@@ -190,9 +194,9 @@ describe('ShellyPlatform', function() {
         const networkInterfaces = sinon.stub(os, 'networkInterfaces')
           .returns({
             en0: [
-              { address: '192.168.1.2' },
-              { address: '192.168.1.3' },
-              { address: '192.168.1.4' },
+              { address: '192.168.1.2', family: 'IPv4', internal: false },
+              { address: '192.168.1.3', family: 'IPv4', internal: false },
+              { address: '192.168.1.4', family: 'IPv4', internal: false },
             ]
           })
 
@@ -209,14 +213,33 @@ describe('ShellyPlatform', function() {
         const networkInterfaces = sinon.stub(os, 'networkInterfaces')
           .returns({
             en0: [
-              { address: '192.168.1.2' },
-              { address: '192.168.1.3' },
-              { address: '192.168.1.4' },
+              { address: '192.168.1.2', family: 'IPv4', internal: false },
+              { address: '192.168.1.3', family: 'IPv4', internal: false },
+              { address: '192.168.1.4', family: 'IPv4', internal: false },
             ]
           })
 
         platform.config.networkInterface = '192.168.1.3'
         platform.getNetworkInterface().should.equal('192.168.1.3')
+
+        networkInterfaces.calledOnce.should.be.true()
+      }
+    )
+
+    it(
+      'should prefer IPv4 addresses when multiple are available',
+      function() {
+        const networkInterfaces = sinon.stub(os, 'networkInterfaces')
+          .returns({
+            en0: [
+              { address: 'fe80::1', family: 'IPv6', internal: false },
+              { address: '192.168.1.2', family: 'IPv4', internal: false },
+              { address: '192.168.1.3', family: 'IPv4', internal: true },
+            ]
+          })
+
+        platform.config.networkInterface = 'en0'
+        platform.getNetworkInterface().should.equal('192.168.1.2')
 
         networkInterfaces.calledOnce.should.be.true()
       }

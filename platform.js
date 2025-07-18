@@ -89,9 +89,15 @@ module.exports = homebridge => {
 
       const ifaces = os.networkInterfaces()
 
-      // if an interface name has been specified, return its address
+      // if an interface name has been specified, return its first
+      // non-internal IPv4 address, or the first address if none match
       if (ifaces[iface] && ifaces[iface].length > 0) {
-        // return the first address
+        for (const addr of ifaces[iface]) {
+          if (!addr.internal && addr.family === 'IPv4') {
+            return addr.address
+          }
+        }
+
         return ifaces[iface][0].address
       }
 
@@ -99,7 +105,7 @@ module.exports = homebridge => {
       // specified address
       for (const i in ifaces) {
         for (const ii of ifaces[i]) {
-          if (ii.address === iface) {
+          if (ii.address === iface && !ii.internal && ii.family === 'IPv4') {
             // address found, so it's valid
             return ii.address
           }
